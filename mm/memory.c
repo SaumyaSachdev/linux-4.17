@@ -78,6 +78,9 @@
 #include <asm/tlbflush.h>
 #include <asm/pgtable.h>
 
+#include <extent-mod/extent-mod.h>
+
+
 #include "internal.h"
 
 #if defined(LAST_CPUPID_NOT_IN_PAGE_FLAGS) && !defined(CONFIG_COMPILE_TEST)
@@ -3094,6 +3097,8 @@ out_release:
 	}
 	return ret;
 }
+extern unsigned char is_myflag_set;
+extern struct header_struct *header_struct_ptr;
 
 /*
  * We enter with non-exclusive mmap_sem (to exclude vma changes,
@@ -3167,6 +3172,19 @@ static int do_anonymous_page(struct vm_fault *vmf)
 	__SetPageUptodate(page);
 
 	entry = mk_pte(page, vma->vm_page_prot);
+
+	if(is_myflag_set > 0)
+	{
+		is_myflag_set += 1;
+
+		printk(KERN_ERR "Inside memory ssup %d\n", is_myflag_set);	
+		header_struct_ptr->header_test++;
+		printk(KERN_ERR "Inside memory header test %d\n", header_struct_ptr->header_test);
+
+
+
+		unsigned long this_pfn= page_to_pfn(page);
+	}
 	if (vma->vm_flags & VM_WRITE)
 		entry = pte_mkwrite(pte_mkdirty(entry));
 

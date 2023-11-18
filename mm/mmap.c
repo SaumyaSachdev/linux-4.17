@@ -51,6 +51,8 @@
 #include <asm/tlb.h>
 #include <asm/mmu_context.h>
 
+#include <extent-mod/extent-mod.h>
+
 #include "internal.h"
 
 #ifndef arch_mmap_check
@@ -1587,6 +1589,36 @@ out_fput:
 	if (file)
 		fput(file);
 	return retval;
+}
+
+unsigned char is_myflag_set = 0;
+EXPORT_SYMBOL(is_myflag_set);
+
+struct header_struct *header_struct_ptr = 0;
+EXPORT_SYMBOL(header_struct_ptr);
+
+
+SYSCALL_DEFINE1(set_personal_flag, unsigned char, flag)
+{
+
+	header_struct_ptr = (header_struct*) kmalloc(sizeof(header_struct), GFP_KERNEL);
+	header_struct_ptr->header_test = 5;
+	printk(KERN_ERR "Inside mmap header test %d\n", header_struct_ptr->header_test);
+
+	is_myflag_set = flag;
+
+
+	if(flag == 1)
+	{
+		printk(KERN_WARNING "1: Its ya boi kernel ssup\n");
+		return 1;
+	}
+	else
+	{
+		printk(KERN_WARNING "Its ya boi kernel ssup\n");
+	}
+	
+	return 0;
 }
 
 SYSCALL_DEFINE6(mmap_pgoff, unsigned long, addr, unsigned long, len,
