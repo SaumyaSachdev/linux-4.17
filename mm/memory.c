@@ -3101,33 +3101,6 @@ extern unsigned char is_myflag_set;
 // extern struct header_struct *header_struct_ptr;
 // extern struct extent_node *ex_root;
 extern struct rb_root root;
-long get_my_rb_count(struct rb_node* node);
-
-long get_my_rb_count (struct rb_node *node)
-{
-	if(!node) {
-		return 0;
-	} else {
-		return get_my_rb_count(node->rb_left) + get_my_rb_count(node->rb_right) + 1;
-	}
-}
-
-void insert_extent_node(struct rb_root *root, extent_node *ex_node) {
-	struct rb_node **newN = &root->rb_node, *parent = NULL;
-	unsigned long value = ex_node->start_pfn;
-	extent_node *node;
-	while (*newN) {
-		parent = *newN;
-		node = rb_entry(*newN, struct extent_node, node);
-		if (node->start_pfn > value) {
-			newN = &((*newN)->rb_left);
-		} else {
-			newN = &((*newN)->rb_right);
-		}
-	}
-	rb_link_node(&ex_node->node, parent, newN);
-	rb_insert_color(&ex_node->node, root);
-}
 
 /*
  * We enter with non-exclusive mmap_sem (to exclude vma changes,
@@ -3143,6 +3116,8 @@ static int do_anonymous_page(struct vm_fault *vmf)
 	int ret = 0;
 	long size;
 	pte_t entry;
+	unsigned long pagepfn;
+	extent_node* left = NULL, *right = NULL;
 
 	/* File mapping without ->vm_ops ? */
 	if (vma->vm_flags & VM_SHARED)
@@ -3203,18 +3178,32 @@ static int do_anonymous_page(struct vm_fault *vmf)
 	__SetPageUptodate(page);
 
 	entry = mk_pte(page, vma->vm_page_prot);
-	
+
 	if(is_myflag_set > 0)
 	{
-		// is_myflag_set += 1;
+		printk(KERN_ERR "Inside memory ssup %d\n", is_myflag_set);
+		pagepfn = page_to_pfn(page);
 
-		printk(KERN_ERR "Inside memory ssup %d\n", is_myflag_set);	
-		// header_struct_ptr->header_test++;
-		// printk(KERN_ERR "Inside memory header test %d\n", header_struct_ptr->header_test);
 		new = (extent_node*) kmalloc(sizeof(extent_node), GFP_KERNEL);
-		new->start_pfn = page_to_pfn(page);
-		new->end_pfn = page_to_pfn(page);
+
+		new->start_pfn = pagepfn;
+		new->end_pfn = pagepfn;
+		left = extent_node_search_end(&root, pagepfn - 1);
+		right = extent_node_search_start(&root, pagepfn + 1);
+
+		if(left)
+		{
+			new->start_pfn = left->start_pfn;
+			rb_erase(&left->node, &root);
+		}
+		if(right)
+		{
+			new->end_pfn = right->end_pfn;
+			rb_erase(&right->node, &root);
+		}
 		insert_extent_node(&root, new);
+
+		printk(KERN_ERR "INserted node %ld\n", new->start_pfn);
 
 		size = get_my_rb_count(root.rb_node);
 		printk(KERN_ERR "Size of rb: %ld\n", size);

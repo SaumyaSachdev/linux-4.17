@@ -1594,43 +1594,26 @@ out_fput:
 unsigned char is_myflag_set = 0;
 EXPORT_SYMBOL(is_myflag_set);
 
-// struct header_struct *header_struct_ptr = 0;
-// struct extent_node *ex_root = 0;
 struct rb_root root;
-// EXPORT_SYMBOL(header_struct_ptr);
-// EXPORT_SYMBOL(ex_root);
 EXPORT_SYMBOL(root);
+
 
 
 SYSCALL_DEFINE1(set_personal_flag, unsigned char, flag)
 {
+	long count_nodes = 0;
+	printk(KERN_ERR "Inside mmap test");
+
 	if (flag > 0) {
 		is_myflag_set = flag;
 		root = RB_ROOT;
 		// ex_root = (extent_node*) kmalloc(sizeof(extent_node), GFP_KERNEL);
-
+		return count_nodes;
 	} else {
 		is_myflag_set = 0;
+		count_nodes = get_my_rb_count(root.rb_node);
+		return count_nodes;
 	}
-	
-
-	// header_struct_ptr = (header_struct*) kmalloc(sizeof(header_struct), GFP_KERNEL);
-	// header_struct_ptr->header_test = 5;
-	printk(KERN_ERR "Inside mmap test");
-
-
-
-	// if(flag == 1)
-	// {
-	// 	printk(KERN_WARNING "1: Its ya boi kernel ssup\n");
-	// 	return 1;
-	// }
-	// else
-	// {
-	// 	printk(KERN_WARNING "Its ya boi kernel ssup\n");
-	// }
-	
-	return 0;
 }
 
 SYSCALL_DEFINE6(mmap_pgoff, unsigned long, addr, unsigned long, len,
