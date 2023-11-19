@@ -2,18 +2,19 @@
 #define _EXTENT_MOD_
 
 #include <linux/rbtree.h>
- 
-typedef struct header_struct{
+
+typedef struct header_struct {
 	int header_test;
 } header_struct;
 
 
-typedef struct extent_node{
+typedef struct extent_node {
 	unsigned long start_pfn;
 	unsigned long end_pfn;
 	struct rb_node node;
 } extent_node;
 
+ 
 // long get_my_rb_count (rb_node *node)
 // {
 // 	if(!node)
@@ -45,6 +46,22 @@ typedef struct extent_node{
 // 	return NULL;
 // }
 
+// void insert_extent_node(struct rb_root *root, extent_node *ex_node) {
+// 	struct rb_node **newN = &root->rb_node, *parent = NULL;
+// 	unsigned long value = ex_node->start_pfn;
+// 	extent_node *node;
+// 	while (*newN) {
+// 		parent = *newN;
+// 		node = rb_entry(*newN, struct extent_node, node);
+// 		if (node->start_pfn > value) {
+// 			newN = &((*newN)->rb_left);
+// 		} else {
+// 			newN = &((*newN)->rb_right);
+// 		}
+// 	}
+// 	rb_link_node(&ex_node->node, parent, newN);
+// 	rb_insert_color(&ex_node->node, root);
+// }
 
 // void my_rb_insert(struct rb_root *root, extent_node *new)
 // {
