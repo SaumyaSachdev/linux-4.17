@@ -3101,6 +3101,7 @@ extern unsigned char is_myflag_set;
 // extern struct header_struct *header_struct_ptr;
 // extern struct extent_node *ex_root;
 extern struct rb_root root;
+extern unsigned long count_pages;
 
 /*
  * We enter with non-exclusive mmap_sem (to exclude vma changes,
@@ -3112,12 +3113,9 @@ static int do_anonymous_page(struct vm_fault *vmf)
 	struct vm_area_struct *vma = vmf->vma;
 	struct mem_cgroup *memcg;
 	struct page *page;
-	extent_node *new;
 	int ret = 0;
-	long size;
 	pte_t entry;
 	unsigned long pagepfn;
-	extent_node* left = NULL, *right = NULL;
 
 	/* File mapping without ->vm_ops ? */
 	if (vma->vm_flags & VM_SHARED)
@@ -3181,32 +3179,15 @@ static int do_anonymous_page(struct vm_fault *vmf)
 
 	if(is_myflag_set > 0)
 	{
-		printk(KERN_ERR "Inside memory ssup %d\n", is_myflag_set);
 		pagepfn = page_to_pfn(page);
 
-		new = (extent_node*) kmalloc(sizeof(extent_node), GFP_KERNEL);
+		insert_and_merge_extent_node(&root, pagepfn);
 
-		new->start_pfn = pagepfn;
-		new->end_pfn = pagepfn;
-		left = extent_node_search_end(&root, pagepfn - 1);
-		right = extent_node_search_start(&root, pagepfn + 1);
+		// printk(KERN_ERR "INserted node %ld\n", new->start_pfn);
 
-		if(left)
-		{
-			new->start_pfn = left->start_pfn;
-			rb_erase(&left->node, &root);
-		}
-		if(right)
-		{
-			new->end_pfn = right->end_pfn;
-			rb_erase(&right->node, &root);
-		}
-		insert_extent_node(&root, new);
-
-		printk(KERN_ERR "INserted node %ld\n", new->start_pfn);
-
-		size = get_my_rb_count(root.rb_node);
-		printk(KERN_ERR "Size of rb: %ld\n", size);
+		// size = get_my_rb_count(root.rb_node);
+		// printk(KERN_ERR "Size of rb: %ld\n", size);
+		count_pages ++; 
 
 		// unsigned long this_pfn= page_to_pfn(page);
 	}

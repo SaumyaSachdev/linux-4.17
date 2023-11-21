@@ -70,4 +70,52 @@ static inline long get_my_rb_count (struct rb_node *node)
 		return get_my_rb_count(node->rb_left) + get_my_rb_count(node->rb_right) + 1;
 	}
 }
+
+static inline long get_extent_pages_count (struct rb_node *node)
+{
+	if(!node) {
+		return 0;
+	} else {
+		extent_node *exnode = rb_entry(node, extent_node, node);
+		// printk(KERN_ERR " exnode->start_pfn  %ld exnode->end_pfn  %ld\n",  exnode->start_pfn, exnode->end_pfn);
+		long totalPages = exnode->end_pfn - exnode->start_pfn;
+		return  totalPages + get_extent_pages_count(node->rb_left) + get_extent_pages_count(node->rb_right) + 1;
+	}
+}
+
+static inline void delete_all_extent_nodes (struct rb_root *root)
+{	
+	while(root->rb_node)
+		rb_erase(root->rb_node, root);
+
+}
+
+
+static inline void insert_and_merge_extent_node(struct rb_root *root, unsigned long pagepfn) {
+	
+	extent_node* left = NULL, *right = NULL;
+	extent_node *new = (extent_node*) kmalloc(sizeof(extent_node), GFP_KERNEL);
+
+
+	new->start_pfn = pagepfn;
+	new->end_pfn = pagepfn;
+	left = extent_node_search_end(root, pagepfn - 1);
+	right = extent_node_search_start(root, pagepfn + 1);
+
+	if(left)
+	{
+		new->start_pfn = left->start_pfn;
+		rb_erase(&left->node, root);
+	}
+	if(right)
+	{
+		new->end_pfn = right->end_pfn;
+		rb_erase(&right->node, root);
+	}
+	insert_extent_node(root, new);
+
+
+}
+
+
 #endif 
