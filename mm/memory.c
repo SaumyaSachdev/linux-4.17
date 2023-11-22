@@ -3102,6 +3102,8 @@ extern unsigned char is_myflag_set;
 // extern struct extent_node *ex_root;
 extern struct rb_root root;
 extern unsigned long count_pages;
+extern struct rw_semaphore rwsem;
+
 
 /*
  * We enter with non-exclusive mmap_sem (to exclude vma changes,
@@ -3181,8 +3183,10 @@ static int do_anonymous_page(struct vm_fault *vmf)
 	{
 		// insert and merge extent tree if flag is set
 		pagepfn = page_to_pfn(page);
+		down_write(&rwsem);
 		insert_and_merge_extent_node(&root, pagepfn);
 		count_pages ++; 
+		up_write(&rwsem);
 	}
 	if (vma->vm_flags & VM_WRITE)
 		entry = pte_mkwrite(pte_mkdirty(entry));
@@ -3235,6 +3239,7 @@ static int __do_fault(struct vm_fault *vmf)
 {
 	struct vm_area_struct *vma = vmf->vma;
 	int ret;
+	unsigned long pagepfn;
 
 	ret = vma->vm_ops->fault(vmf);
 	if (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE | VM_FAULT_RETRY |
@@ -3253,6 +3258,16 @@ static int __do_fault(struct vm_fault *vmf)
 		lock_page(vmf->page);
 	else
 		VM_BUG_ON_PAGE(!PageLocked(vmf->page), vmf->page);
+
+	
+	if(is_myflag_set > 0)
+	{
+		// insert and merge extent tree if flag is set
+		// printk(KERN_ERR "pfn for page shared fault: %ld\n", page_to_pfn(vmf->page));
+		pagepfn = page_to_pfn(vmf->page);
+		insert_and_merge_extent_node(&root, pagepfn);
+		count_pages ++; 
+	}
 
 	return ret;
 }
