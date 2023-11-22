@@ -1606,37 +1606,7 @@ EXPORT_SYMBOL(count_pages);
 SYSCALL_DEFINE1(set_personal_flag, unsigned char, flag)
 {
 	long count_nodes = 0;
-	//testing rb tree functoion 
-	// if (flag == 5)
-	// {
-	// 	int test_vals[5] =  {1, 7, 9, 8, 10};
-
-	// 	int test_val = 2;
-	// 	int i=0;
-	// 	root = RB_ROOT;
-
-	// 	for(i; i<5; i++)
-	// 	{
-	// 		insert_and_merge_extent_node(&root, test_vals[i]);
-
-	// 		printk(KERN_ERR "inserting: %ld\n", test_vals[i]);
-
-	// 	}
-	// 	long cp =  get_extent_pages_count(root.rb_node);
-	// 	printk(KERN_ERR "count_pages: %ld\n", cp);
-
-	// 	count_nodes = get_my_rb_count(root.rb_node);
-	// 	printk(KERN_ERR "count_nodes: %ld\n", count_nodes);
-
-	// 	rb_erase(root.rb_node, &root);
-	// 	count_nodes = get_my_rb_count(root.rb_node);
-	// 	printk(KERN_ERR "after 1 erase count_nodes: %ld\n", count_nodes);
-
-	// 	delete_all_extent_nodes(&root);
-	// 	count_nodes = get_my_rb_count(root.rb_node);
-	// 	printk(KERN_ERR "after delete all count_nodes: %ld\n", count_nodes);
-
-	// }
+	
 	if (flag > 0) {
 		is_myflag_set = flag;
 		root = RB_ROOT;

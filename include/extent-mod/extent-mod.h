@@ -9,6 +9,7 @@ typedef struct extent_node {
 	struct rb_node node;
 } extent_node;
 
+// check if the new pfn matches the start_pfns of existing nodes
 static inline struct extent_node *extent_node_search_start(struct rb_root *root, int value)
 {
 	struct rb_node *node = root->rb_node;  /* top of the tree */
@@ -27,6 +28,7 @@ static inline struct extent_node *extent_node_search_start(struct rb_root *root,
 	return NULL;
 }
 
+// create new node in rbtree
 static inline void insert_extent_node(struct rb_root *root, extent_node *ex_node) {
 	struct rb_node **newN = &root->rb_node, *parent = NULL;
 	unsigned long value = ex_node->start_pfn;
@@ -44,6 +46,7 @@ static inline void insert_extent_node(struct rb_root *root, extent_node *ex_node
 	rb_insert_color(&ex_node->node, root);
 }
 
+// check if the new pfn matches the end_pfns of existing nodes
 static inline struct extent_node *extent_node_search_end(struct rb_root *root, int value)
 {
 	struct rb_node *node = root->rb_node;  /* top of the tree */
@@ -62,6 +65,7 @@ static inline struct extent_node *extent_node_search_end(struct rb_root *root, i
 	return NULL;
 }
 
+// recursively call this function to get count of all nodes
 static inline long get_my_rb_count (struct rb_node *node)
 {
 	if(!node) {
@@ -71,6 +75,7 @@ static inline long get_my_rb_count (struct rb_node *node)
 	}
 }
 
+// test to verify the value of extent
 static inline long get_extent_pages_count (struct rb_node *node)
 {
 	if(!node) {

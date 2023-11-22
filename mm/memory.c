@@ -3179,17 +3179,10 @@ static int do_anonymous_page(struct vm_fault *vmf)
 
 	if(is_myflag_set > 0)
 	{
+		// insert and merge extent tree if flag is set
 		pagepfn = page_to_pfn(page);
-
 		insert_and_merge_extent_node(&root, pagepfn);
-
-		// printk(KERN_ERR "INserted node %ld\n", new->start_pfn);
-
-		// size = get_my_rb_count(root.rb_node);
-		// printk(KERN_ERR "Size of rb: %ld\n", size);
 		count_pages ++; 
-
-		// unsigned long this_pfn= page_to_pfn(page);
 	}
 	if (vma->vm_flags & VM_WRITE)
 		entry = pte_mkwrite(pte_mkdirty(entry));
