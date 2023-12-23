@@ -1609,24 +1609,11 @@ SYSCALL_DEFINE1(set_personal_flag, unsigned char, flag)
 	long count_nodes = 0;
 	
 	if (flag > 0) {
-		init_rwsem(&rwsem);
+		printk(KERN_ERR "myflag set in kernel\n");
 		is_myflag_set = flag;
-		root = RB_ROOT;
-		count_pages = 0;
-		// // ex_root = (extent_node*) kmalloc(sizeof(extent_node), GFP_KERNEL);
-		printk(KERN_ERR "Created rb root\n");
-		printk(KERN_ERR "count_nodes: %ld\n", get_my_rb_count(root.rb_node));
-		
-		// return count_nodes;
 
 	} else {
 		is_myflag_set = 0;
-		count_nodes = get_my_rb_count(root.rb_node);
-		printk(KERN_ERR "count pages: %ld\n", count_pages);
-		// printk(KERN_ERR "calculated count pages: %ld\n", get_extent_pages_count(root.rb_node));
-		printk(KERN_ERR "count_nodes: %ld\n", count_nodes);
-		printk(KERN_ERR "TLB entries saved %ld \n", (count_pages - count_nodes) );
-		delete_all_extent_nodes(&root);
 		return count_nodes;
 	}
 

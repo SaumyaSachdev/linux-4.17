@@ -3179,15 +3179,6 @@ static int do_anonymous_page(struct vm_fault *vmf)
 
 	entry = mk_pte(page, vma->vm_page_prot);
 
-	if(is_myflag_set > 0)
-	{
-		// insert and merge extent tree if flag is set
-		pagepfn = page_to_pfn(page);
-		down_write(&rwsem);
-		insert_and_merge_extent_node(&root, pagepfn);
-		count_pages ++; 
-		up_write(&rwsem);
-	}
 	if (vma->vm_flags & VM_WRITE)
 		entry = pte_mkwrite(pte_mkdirty(entry));
 
@@ -3258,16 +3249,6 @@ static int __do_fault(struct vm_fault *vmf)
 		lock_page(vmf->page);
 	else
 		VM_BUG_ON_PAGE(!PageLocked(vmf->page), vmf->page);
-
-	
-	if(is_myflag_set > 0)
-	{
-		// insert and merge extent tree if flag is set
-		// printk(KERN_ERR "pfn for page shared fault: %ld\n", page_to_pfn(vmf->page));
-		pagepfn = page_to_pfn(vmf->page);
-		insert_and_merge_extent_node(&root, pagepfn);
-		count_pages ++; 
-	}
 
 	return ret;
 }
@@ -3518,9 +3499,13 @@ int finish_fault(struct vm_fault *vmf)
 	 * page
 	 */
 	if (!(vmf->vma->vm_flags & VM_SHARED))
+	{
 		ret = check_stable_address_space(vmf->vma->vm_mm);
+	}
 	if (!ret)
+	{
 		ret = alloc_set_pte(vmf, vmf->memcg, page);
+	}
 	if (vmf->pte)
 		pte_unmap_unlock(vmf->pte, vmf->ptl);
 	return ret;
@@ -3718,7 +3703,9 @@ static int do_shared_fault(struct vm_fault *vmf)
 
 	ret = __do_fault(vmf);
 	if (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE | VM_FAULT_RETRY)))
+	{
 		return ret;
+	}
 
 	/*
 	 * Check if the backing address space wants to know that the page is
@@ -3755,8 +3742,9 @@ static int do_shared_fault(struct vm_fault *vmf)
 static int do_fault(struct vm_fault *vmf)
 {
 	struct vm_area_struct *vma = vmf->vma;
+	struct mm_struct *mm = vma->vm_mm;
 	int ret;
-
+	int count_pages_loc = 0;
 	/* The VMA was not fully populated on mmap() or missing VM_DONTEXPAND */
 	if (!vma->vm_ops->fault)
 		ret = VM_FAULT_SIGBUS;
@@ -3765,7 +3753,55 @@ static int do_fault(struct vm_fault *vmf)
 	else if (!(vma->vm_flags & VM_SHARED))
 		ret = do_cow_fault(vmf);
 	else
-		ret = do_shared_fault(vmf);
+	{
+		if(is_myflag_set > 0)
+		{
+	
+			while(count_pages_loc < is_myflag_set)
+			{
+			
+				ret = do_shared_fault(vmf);
+				if(vmf->address + 4096 >= vma->vm_end )
+					break;
+				vmf->address += 4096;
+				vmf->pgoff =  linear_page_index(vma, vmf->address);
+				pgd_t *pgd;
+				p4d_t *p4d;
+
+				pgd = pgd_offset(mm, vmf->address);
+				p4d = p4d_alloc(mm, pgd, vmf->address);
+				if (!p4d)
+					printk(KERN_ERR "Error allocating p4d");
+
+				vmf->pud = pud_alloc(mm, p4d, vmf->address);
+
+				if (!vmf->pud)
+					printk(KERN_ERR "Error  allocating pud");
+				
+				vmf->pmd = pmd_alloc(mm, vmf->pud, vmf->address);
+
+				if (!vmf->pmd)
+					printk(KERN_ERR "Error  allocating pmd");
+				
+
+				vmf->pte = pte_offset_map(vmf->pmd, vmf->address);
+				vmf->orig_pte = *vmf->pte;
+				if (pte_none(vmf->orig_pte)) {
+
+					// printk(KERN_ERR "Error pte was noned");
+					pte_unmap(vmf->pte);
+					vmf->pte = NULL;
+				}
+
+				count_pages_loc ++;
+				
+			}
+		}
+		else
+		{
+			ret = do_shared_fault(vmf);
+		}
+	}
 
 	/* preallocated pagetable is unused: free it */
 	if (vmf->prealloc_pte) {
