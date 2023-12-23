@@ -1591,7 +1591,7 @@ out_fput:
 	return retval;
 }
 
-unsigned char is_myflag_set = 0;
+unsigned long is_myflag_set = 0;
 EXPORT_SYMBOL(is_myflag_set);
 
 struct rb_root root;
@@ -1604,7 +1604,7 @@ EXPORT_SYMBOL(count_pages);
 struct rw_semaphore rwsem;
 EXPORT_SYMBOL (rwsem);
 
-SYSCALL_DEFINE1(set_personal_flag, unsigned char, flag)
+SYSCALL_DEFINE1(set_personal_flag, unsigned long, flag)
 {
 	long count_nodes = 0;
 	

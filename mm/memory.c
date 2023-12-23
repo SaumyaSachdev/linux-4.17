@@ -3097,7 +3097,7 @@ out_release:
 	}
 	return ret;
 }
-extern unsigned char is_myflag_set;
+extern unsigned long is_myflag_set;
 // extern struct header_struct *header_struct_ptr;
 // extern struct extent_node *ex_root;
 extern struct rb_root root;
